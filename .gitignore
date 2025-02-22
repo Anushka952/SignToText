@@ -1,0 +1,12 @@
+# Ignore node_modules
+frontend/node_modules/
+
+# Ignore specific files in the extra folder
+train.csv
+sign_to_prediction_index_map.json
+
+# Ignore a specific folder in extra
+train_landmark_files/
+
+# Ignore a specific file in backend folder inside extra
+SlToText/sign_language_model.pth
