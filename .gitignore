@@ -10,3 +10,5 @@ train_landmark_files/
 
 # Ignore a specific file in backend folder inside extra
 SlToText/sign_language_model.pth
+SlToText/sign_language_model_full.pth
+SlToText/sign_language_model_full_weights.pth
