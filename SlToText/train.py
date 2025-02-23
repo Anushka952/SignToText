@@ -1,34 +1,51 @@
 import torch
-import argparse
-from model import SignLanguageModel, train_model
+import torch.optim as optim
+import torch.nn as nn
+from model import SignLanguageModel
 from dataset import get_dataloader
 
+def train_model(model, train_loader, epochs=10, lr=0.001, device="cpu"):
+    model.to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=lr)
+
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0
+
+        for seq_features, labels in train_loader:
+            seq_features, labels = seq_features.to(device), labels.to(device)
+            
+            optimizer.zero_grad()
+            outputs = model(seq_features)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            total_loss += loss.item()
+
+        print(f"Epoch [{epoch+1}/{epochs}], Loss: {total_loss/len(train_loader):.4f}")
+
 def main():
-    # Argument parsing
-    parser = argparse.ArgumentParser(description="Train Sign Language Model")
-    parser.add_argument("--csv_path", default="D:/Extra/train.csv", help="Path to train.csv")
-    parser.add_argument("--landmarks_dir", default="D:/Extra/", help="Path to landmark .parquet files")
-    parser.add_argument("--json_map_path", default="D:/Extra/sign_to_prediction_index_map.json", help="Path to JSON label mapping")
-    parser.add_argument("--batch_size", type=int, default=32, help="Batch size for training")
-    parser.add_argument("--epochs", type=int, default=10, help="Number of epochs")
-    parser.add_argument("--learning_rate", type=float, default=0.001, help="Learning rate")
-    parser.add_argument("--num_classes", type=int, default=250, help="Number of sign language classes")
-    args = parser.parse_args()
+    # Update paths here
+    csv_path = "D:/Extra/train.csv"
+    landmarks_dir = "D:/Extra/"
+    json_map_path = "D:/Extra/sign_to_prediction_index_map.json"
 
-    # Load data
-    train_loader = get_dataloader(args.csv_path, args.landmarks_dir, args.json_map_path, batch_size=args.batch_size)
+    # Load Data
+    train_loader = get_dataloader(csv_path, landmarks_dir, json_map_path, batch_size=32)
 
-    # Initialize model
+    # Use GPU if available
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = SignLanguageModel(num_classes=args.num_classes).to(device)
+    
+    # Initialize Model
+    model = SignLanguageModel(num_classes=250).to(device)
 
-    # Train model
-    train_model(model, train_loader, epochs=args.epochs, lr=args.learning_rate, device=device)
+    # Train Model
+    train_model(model, train_loader, epochs=10, device=device)
 
-    # Save model
-    torch.save(model.state_dict(), "sign_language_model.pth")
-    print("Model training complete and saved!")
+    # Save Full Model (Not just weights)
+    torch.save(model, "sign_language_model_full.pth")
+    print("Model saved as sign_language_model_full.pth")
 
-# **Required for Windows multiprocessing**
 if __name__ == "__main__":
     main()
